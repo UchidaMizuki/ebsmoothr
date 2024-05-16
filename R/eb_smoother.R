@@ -71,8 +71,10 @@ print.eb_smoother <- function(x, ...) {
 #' @export
 predict.eb_smoother <- function(object,
                                 newdata = NULL,
-                                se.fit = FALSE,
+                                type = c("expected", "variance"),
                                 ...) {
+  type <- rlang::arg_match(type, c("expected", "variance"))
+
   expected <- predict(object$model,
                       newdata = newdata,
                       type = "response",
@@ -88,14 +90,10 @@ predict.eb_smoother <- function(object,
     shape_posterior <- observed + shape_prior
     rate_posterior <- population + rate_prior
 
-    fit <- shape_posterior / rate_posterior
-
-    if (se.fit) {
-      se <- sqrt(shape_posterior / rate_posterior^2)
-      list(fit = fit,
-           se.fit = se)
-    } else {
-      fit
+    if (type == "expected") {
+      shape_posterior / rate_posterior
+    } else if (type == "variance") {
+      shape_posterior / rate_posterior^2
     }
   } else if (object$family$family == "betabinomial") {
     sigma_model <- stats::sigma(object$model)
@@ -106,14 +104,10 @@ predict.eb_smoother <- function(object,
     shape1_posterior <- observed + shape1_prior
     shape2_posterior <- population - observed + shape2_prior
 
-    fit <- shape1_posterior / (shape1_posterior + shape2_posterior)
-
-    if (se.fit) {
-      se <- sqrt(shape1_posterior * shape2_posterior / (shape1_posterior + shape2_posterior + 1) * (shape1_posterior + shape2_posterior)^2)
-      list(fit = fit,
-           se.fit = se)
-    } else {
-      fit
+    if (type == "expected") {
+      shape1_posterior / (shape1_posterior + shape2_posterior)
+    } else if (type == "variance") {
+      shape1_posterior * shape2_posterior / (shape1_posterior + shape2_posterior + 1) * (shape1_posterior + shape2_posterior)^2
     }
   }
 }
