@@ -4,6 +4,7 @@
 ## usethis namespace: start
 #' @importFrom glmmTMB betabinomial
 #' @importFrom glmmTMB nbinom2
+#' @importFrom stats offset
 #' @importFrom stats predict
 ## usethis namespace: end
 NULL

@@ -32,7 +32,7 @@ eb_smoother <- function(data, observed, population,
     }
 
     rlang::f_lhs(formula) <- observed
-    rlang::f_rhs(formula) <- rlang::expr(!!rlang::f_rhs(formula) + stats::offset(log(!!population)))
+    rlang::f_rhs(formula) <- rlang::expr(!!rlang::f_rhs(formula) + offset(log(!!population)))
 
     model <- glmmTMB::glmmTMB(formula = formula,
                               data = data,
