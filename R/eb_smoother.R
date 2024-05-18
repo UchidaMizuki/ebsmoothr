@@ -71,10 +71,7 @@ print.eb_smoother <- function(x, ...) {
 #' @export
 predict.eb_smoother <- function(object,
                                 newdata = NULL,
-                                type = c("expected", "variance"),
                                 ...) {
-  type <- rlang::arg_match(type, c("expected", "variance"))
-
   expected <- predict(object$model,
                       newdata = newdata,
                       type = "response",
@@ -84,30 +81,25 @@ predict.eb_smoother <- function(object,
   population <- rlang::eval_tidy(object$population, newdata)
 
   if (object$family$family == "nbinom2") {
-    shape_prior <- stats::sigma(object$model)
-    rate_prior <- shape_prior * population / expected
+    prior <- tibble::tibble(shape = stats::sigma(object$model),
+                            rate = stats::sigma(object$model) * population / expected)
 
-    shape_posterior <- observed + shape_prior
-    rate_posterior <- population + rate_prior
-
-    if (type == "expected") {
-      shape_posterior / rate_posterior
-    } else if (type == "variance") {
-      shape_posterior / rate_posterior^2
-    }
+    posterior <- tibble::tibble(shape = observed + prior$shape,
+                                rate = population + prior$rate)
+    expected <- posterior$shape / posterior$rate
+    variance <- posterior$shape / posterior$rate^2
   } else if (object$family$family == "betabinomial") {
     sigma_model <- stats::sigma(object$model)
 
-    shape1_prior <- expected * sigma_model
-    shape2_prior <- sigma_model - shape1_prior
-
-    shape1_posterior <- observed + shape1_prior
-    shape2_posterior <- population - observed + shape2_prior
-
-    if (type == "expected") {
-      shape1_posterior / (shape1_posterior + shape2_posterior)
-    } else if (type == "variance") {
-      shape1_posterior * shape2_posterior / (shape1_posterior + shape2_posterior + 1) * (shape1_posterior + shape2_posterior)^2
-    }
+    prior <- tibble::tibble(shape1 = expected * sigma_model,
+                            shape2 = sigma_model - expected * sigma_model)
+    posterior <- tibble::tibble(shape1 = observed + prior$shape1,
+                                shape2 = population - observed + prior$shape2)
+    expected <- posterior$shape1 / (posterior$shape1 + posterior$shape2)
+    variance <- posterior$shape1 * posterior$shape2 / (posterior$shape1 + posterior$shape2 + 1) * (posterior$shape1 + posterior$shape2)^2
   }
+  tibble::tibble(prior = prior,
+                 posterior = posterior,
+                 expected = expected,
+                 variance = variance)
 }
