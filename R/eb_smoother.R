@@ -96,7 +96,7 @@ predict.eb_smoother <- function(object,
     posterior <- tibble::tibble(shape1 = observed + prior$shape1,
                                 shape2 = population - observed + prior$shape2)
     expected <- posterior$shape1 / (posterior$shape1 + posterior$shape2)
-    variance <- posterior$shape1 * posterior$shape2 / (posterior$shape1 + posterior$shape2 + 1) * (posterior$shape1 + posterior$shape2)^2
+    variance <- posterior$shape1 * posterior$shape2 / (posterior$shape1 + posterior$shape2)^2 / (posterior$shape1 + posterior$shape2 + 1)
   }
   tibble::tibble(prior = prior,
                  posterior = posterior,
